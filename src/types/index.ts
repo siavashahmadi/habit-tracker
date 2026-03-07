@@ -39,6 +39,7 @@ export interface AppStats {
   totalHabits: number
   goodHabits: number
   badHabits: number
+  totalCompletions: number
   longestStreak: number
   averageStreak: number
   leaderboard: { habit: Habit; streak: number }[]

@@ -71,7 +71,7 @@ export default function Profile() {
         </h3>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-white">{stats.longestStreak}</p>
+            <p className="text-2xl font-bold text-white">{stats.totalCompletions}</p>
             <p className="text-[10px] text-slate-500 mt-0.5">Total Days</p>
           </div>
           <div>
