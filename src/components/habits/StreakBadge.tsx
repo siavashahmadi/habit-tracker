@@ -1,5 +1,6 @@
 import { Flame, ShieldCheck } from 'lucide-react'
 import type { HabitType } from '../../types'
+import { getHighestMilestoneAchieved } from '../../lib/milestones'
 
 interface StreakBadgeProps {
   streak: number
@@ -10,6 +11,7 @@ interface StreakBadgeProps {
 export default function StreakBadge({ streak, type, size = 'md' }: StreakBadgeProps) {
   const isGood = type === 'good'
   const label = isGood ? `${streak} Day Streak` : `${streak} Days Clean`
+  const milestone = getHighestMilestoneAchieved(streak)
 
   if (size === 'sm') {
     return (
@@ -37,11 +39,14 @@ export default function StreakBadge({ streak, type, size = 'md' }: StreakBadgePr
       }`}
     >
       {isGood ? (
-        <Flame className="w-4 h-4" />
+        <Flame className={`w-4 h-4 ${milestone ? 'drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]' : ''}`} />
       ) : (
-        <ShieldCheck className="w-4 h-4" />
+        <ShieldCheck className={`w-4 h-4 ${milestone ? 'drop-shadow-[0_0_4px_rgba(251,191,36,0.8)]' : ''}`} />
       )}
-      <span>{label}</span>
+      <span className={milestone ? 'text-amber-300' : ''}>{label}</span>
+      {milestone && (
+        <span className="text-xs text-slate-500 font-normal">· {milestone.label}</span>
+      )}
     </div>
   )
 }
