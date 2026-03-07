@@ -45,8 +45,10 @@ function AppRouter() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      // Invalidate all queries on auth change
-      queryClient.clear()
+      // M3: Targeted invalidation rather than queryClient.clear() to avoid
+      // clobbering in-flight queries and causing unnecessary loading states
+      queryClient.invalidateQueries({ queryKey: ['habits'] })
+      queryClient.invalidateQueries({ queryKey: ['habit_logs'] })
     })
 
     return () => subscription.unsubscribe()

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react'
 import { format } from 'date-fns'
@@ -20,8 +20,9 @@ export default function HabitCard({ habit, logs, viewMode = 'grid' }: HabitCardP
   const deleteHabit = useDeleteHabit()
   const { logToday, isPending } = useLogToday()
 
-  const logDates = logs.filter((l) => l.habit_id === habit.id).map((l) => l.logged_date)
-  const habitLogs = logs.filter((l) => l.habit_id === habit.id)
+  // H4: Memoize to avoid re-filtering the full logs array on every render
+  const habitLogs = useMemo(() => logs.filter((l) => l.habit_id === habit.id), [logs, habit.id])
+  const logDates = useMemo(() => habitLogs.map((l) => l.logged_date), [habitLogs])
 
   const streak =
     habit.type === 'good'
