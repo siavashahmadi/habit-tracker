@@ -15,6 +15,22 @@ interface HeatmapGridProps {
   interactive?: boolean    // allow tapping cells
 }
 
+// H3: Static class maps so Tailwind JIT can detect all class names at build time
+const GOOD_COLORS: Record<number, string> = {
+  0: 'bg-slate-800 hover:bg-slate-700',
+  1: 'bg-emerald-500/40',
+  2: 'bg-emerald-500/60',
+  3: 'bg-emerald-500/80',
+  4: '', // handled via inline habitColor style
+}
+const BAD_COLORS: Record<number, string> = {
+  0: 'bg-slate-800 hover:bg-slate-700',
+  1: 'bg-rose-500/40',
+  2: 'bg-rose-500/60',
+  3: 'bg-rose-500/80',
+  4: 'bg-rose-500',
+}
+
 /**
  * GitHub-style contribution heatmap.
  *
@@ -45,20 +61,8 @@ export default function HeatmapGrid({
   const getCellColor = (filled: boolean, level: number, isFuture: boolean) => {
     if (isFuture) return 'bg-slate-800/40'
     if (!filled) return 'bg-slate-800 hover:bg-slate-700'
-
-    if (habitType === 'good') {
-      if (level === 4) return '' // full color, handled via inline style
-      return `bg-emerald-${level === 1 ? '500/40' : level === 2 ? '500/60' : '500/80'}`
-    } else {
-      // Bad habit slip — red
-      const intensities: Record<number, string> = {
-        1: 'bg-rose-500/40',
-        2: 'bg-rose-500/60',
-        3: 'bg-rose-500/80',
-        4: 'bg-rose-500',
-      }
-      return intensities[level] ?? 'bg-rose-500/40'
-    }
+    const colorMap = habitType === 'good' ? GOOD_COLORS : BAD_COLORS
+    return colorMap[level] ?? colorMap[1]
   }
 
   const handleCellClick = (date: string, isFuture: boolean) => {

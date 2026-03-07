@@ -33,7 +33,7 @@ export function useLogsForHabit(habitId: string): string[] {
 // ---- Toggle log (optimistic) ----
 export function useToggleLog() {
   const queryClient = useQueryClient()
-  const { setOptimisticLog, clearOptimisticLogs } = useHabitStore()
+  const { setOptimisticLog, rollbackOptimisticLog, clearOptimisticLogs } = useHabitStore()
 
   return useMutation({
     mutationFn: async ({
@@ -72,12 +72,13 @@ export function useToggleLog() {
       setOptimisticLog(habitId, date, !currentlyLogged)
     },
 
-    onError: (_err, { habitId }) => {
-      // Roll back optimistic update
-      clearOptimisticLogs(habitId)
+    onError: (_err, { habitId, date }) => {
+      // C4: Roll back only this specific date to avoid clobbering concurrent mutations
+      rollbackOptimisticLog(habitId, date)
     },
 
     onSettled: (_data, _err, { habitId }) => {
+      // Remove optimistic entry for this date; server state takes over after invalidation
       clearOptimisticLogs(habitId)
       queryClient.invalidateQueries({ queryKey: LOGS_KEY })
     },
