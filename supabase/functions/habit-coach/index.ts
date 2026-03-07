@@ -1,10 +1,20 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// C2: Restrict CORS to the deployed frontend origin.
+// Falls back to localhost for local development.
+const ALLOWED_ORIGIN = Deno.env.get('FRONTEND_URL') ?? 'http://localhost:5173'
+
+function corsHeaders(origin: string) {
+  const allowed = origin === ALLOWED_ORIGIN || origin.startsWith('http://localhost')
+  return {
+    'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGIN,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
 }
 
 const SYSTEM_PROMPT = `You are a supportive, knowledgeable habit coach.
@@ -12,10 +22,40 @@ You have access to the user's real habit data provided in each message.
 Keep responses concise (2-4 sentences), warm, and actionable.
 Focus on patterns, wins, and specific improvements the user can make.`
 
+// C1: Verify the Supabase JWT before processing any request
+async function verifyJWT(authHeader: string | null): Promise<boolean> {
+  if (!authHeader?.startsWith('Bearer ')) return false
+  const token = authHeader.slice(7)
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        apikey: SUPABASE_ANON_KEY,
+      },
+    })
+    return res.ok
+  } catch {
+    return false
+  }
+}
+
 serve(async (req) => {
+  const origin = req.headers.get('origin') ?? ''
+  const headers = corsHeaders(origin)
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS })
+    return new Response('ok', { headers })
+  }
+
+  // C1: Verify JWT on every non-OPTIONS request
+  const authorized = await verifyJWT(req.headers.get('authorization'))
+  if (!authorized) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...headers, 'Content-Type': 'application/json' },
+    })
   }
 
   try {
@@ -53,7 +93,7 @@ Examples:
       const data = await res.json()
       const parsed = JSON.parse(data.choices[0].message.content)
       return new Response(JSON.stringify(parsed), {
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       })
     }
 
@@ -82,18 +122,19 @@ Examples:
       const data = await res.json()
       const reply = data.choices?.[0]?.message?.content ?? 'Sorry, I could not generate a response.'
       return new Response(JSON.stringify({ reply }), {
-        headers: { ...CORS, 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
       })
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), {
       status: 400,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
     })
-  } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+  } catch {
+    // H7: Return a generic error message — never expose internal error details
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...CORS, 'Content-Type': 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
     })
   }
 })

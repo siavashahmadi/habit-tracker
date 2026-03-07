@@ -1,8 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Component } from 'react'
+import type { ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from './lib/supabase'
+
+// M8: Error boundary to catch unexpected runtime errors and show a friendly UI
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
+          <div className="text-center space-y-3">
+            <p className="text-4xl">💥</p>
+            <h2 className="text-white font-semibold">Something went wrong</h2>
+            <p className="text-slate-400 text-sm">Please refresh the page to continue.</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-medium rounded-xl transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
 
 // Pages
 import Home from './pages/Home'
@@ -121,8 +155,10 @@ export default function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AppRouter />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AppRouter />
+      </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
