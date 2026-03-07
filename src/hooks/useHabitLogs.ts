@@ -7,9 +7,15 @@ import type { HabitLog } from '../types'
 export const LOGS_KEY = ['habit_logs'] as const
 
 async function fetchAllLogs(): Promise<HabitLog[]> {
+  // M4: Limit to 1 year of data — avoids unbounded query for long-time users
+  const cutoff = new Date()
+  cutoff.setFullYear(cutoff.getFullYear() - 1)
+  const cutoffStr = cutoff.toISOString().split('T')[0]
+
   const { data, error } = await supabase
     .from('habit_logs')
     .select('*')
+    .gte('logged_date', cutoffStr)
     .order('logged_date', { ascending: false })
 
   if (error) throw error

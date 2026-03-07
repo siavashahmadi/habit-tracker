@@ -45,13 +45,23 @@ export default function AddHabitModal() {
   const [color, setColor] = useState(COLORS[0])
   const [nlInput, setNlInput] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   const [showNL, setShowNL] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
+  // M2: Store timeout id so we can cancel it on unmount
+  const focusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (focusTimeoutRef.current) clearTimeout(focusTimeoutRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     if (isAddModalOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100)
+      // M2: Track timeout so it can be cancelled if component unmounts
+      focusTimeoutRef.current = setTimeout(() => inputRef.current?.focus(), 100)
     } else {
       // Reset form
       setName('')
@@ -59,6 +69,7 @@ export default function AddHabitModal() {
       setIcon('💪')
       setColor(COLORS[0])
       setNlInput('')
+      setAiError(null)
       setShowNL(false)
     }
   }, [isAddModalOpen])
@@ -66,6 +77,7 @@ export default function AddHabitModal() {
   const handleAIParse = async () => {
     if (!nlInput.trim()) return
     setAiLoading(true)
+    setAiError(null)
     const result = await parseHabitFromNL(nlInput.trim())
     setAiLoading(false)
     if (result) {
@@ -73,6 +85,9 @@ export default function AddHabitModal() {
       setType(result.type)
       setIcon(result.icon)
       setShowNL(false)
+    } else {
+      // H6: Show error feedback when AI can't parse the description
+      setAiError("Couldn't extract a habit. Try being more specific, e.g. 'Stop drinking coffee' or 'Exercise every morning'.")
     }
   }
 
@@ -157,6 +172,9 @@ export default function AddHabitModal() {
                         )}
                       </button>
                     </div>
+                    {aiError && (
+                      <p className="mt-1.5 text-xs text-rose-400">{aiError}</p>
+                    )}
                   </motion.div>
                 ) : null}
               </AnimatePresence>

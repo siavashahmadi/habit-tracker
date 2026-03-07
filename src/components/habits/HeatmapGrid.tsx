@@ -32,12 +32,10 @@ export default function HeatmapGrid({
   const toggleLog = useToggleLog()
   const { isOptimisticallyLogged } = useHabitStore()
 
-  const logDates = logs.map((l) => l.logged_date)
-
+  // H5: Derive logDates inside memo — HabitCard passes a stable memoized `logs` ref
   const grid = useMemo(
-    () => buildHeatmap(logDates, habitType),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [logDates.join(','), habitType]
+    () => buildHeatmap(logs.map((l) => l.logged_date), habitType),
+    [logs, habitType]
   )
 
   const visibleGrid = compact ? getRecentWeeks(grid, 16) : grid
