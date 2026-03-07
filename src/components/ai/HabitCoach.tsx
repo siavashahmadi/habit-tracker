@@ -4,10 +4,10 @@ import { Send, Loader2, Bot, Sparkles, User } from 'lucide-react'
 import { useHabits } from '../../hooks/useHabits'
 import { useHabitLogs } from '../../hooks/useHabitLogs'
 import { calcCurrentStreak, calcBadHabitStreak } from '../../lib/algorithms/streak'
+import { supabase } from '../../lib/supabase'
 import type { AIMessage } from '../../types'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 const QUICK_PROMPTS = [
   'How am I doing overall?',
@@ -67,11 +67,17 @@ export default function HabitCoach() {
 
     try {
       const context = buildContext()
+      // C1: Send the user's JWT instead of the anon key so the Edge Function
+      // can verify the caller is authenticated
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
+      if (!token) throw new Error('Not authenticated')
+
       const res = await fetch(`${SUPABASE_URL}/functions/v1/habit-coach`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           action: 'chat',

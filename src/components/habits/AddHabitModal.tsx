@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Sparkles, ShieldOff, Loader2, Wand2 } from 'lucide-react'
 import { useHabitStore } from '../../store/habitStore'
 import { useCreateHabit } from '../../hooks/useHabits'
+import { supabase } from '../../lib/supabase'
 import type { HabitType } from '../../types'
 
 const ICONS = ['💪', '📚', '🧘', '🏃', '💧', '🍎', '😴', '✍️', '🎯', '🧠', '🚫', '🚬', '🍔', '📱', '🍷', '💊']
@@ -18,13 +19,18 @@ const COLORS = [
 ]
 
 // AI-powered NL parsing (calls the Edge Function)
+// C1: Sends the user's JWT so the Edge Function can verify the caller
 async function parseHabitFromNL(text: string): Promise<{ name: string; type: HabitType; icon: string } | null> {
   try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) return null
+
     const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/habit-coach`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ action: 'parse_habit', text }),
     })
