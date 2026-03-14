@@ -2,8 +2,6 @@
 
 A portfolio-grade habit tracking PWA — GitHub-style contribution heatmaps, good/bad habit tracking, AI coaching, and seamless mobile + desktop experience.
 
-**Live:** [github.com/siavashahmadi/habit-tracker](https://github.com/siavashahmadi/habit-tracker)
-
 ---
 
 ## Features
