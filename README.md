@@ -269,7 +269,19 @@ cp .env.example .env
 npm run dev   # http://localhost:5173
 ```
 
-### 5. Deploy AI Edge Function (optional)
+### 5. Docker deployment (optional)
+
+```bash
+cp .env.example .env
+# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+
+docker compose up -d --build    # builds & starts on port 3000
+curl http://localhost:3000      # verify it's running
+```
+
+The multi-stage build produces an ~30MB nginx image. Supabase env vars are baked into the JS bundle at build time (Vite `import.meta.env`), so rebuild when credentials change.
+
+### 6. Deploy AI Edge Function (optional)
 ```bash
 npm install -g supabase
 supabase login
