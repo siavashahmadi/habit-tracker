@@ -2,7 +2,8 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-const SUPABASE_PUBLISHABLE_KEY = Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
+// Supabase auto-injects SUPABASE_ANON_KEY into edge functions at runtime
+const SUPABASE_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 // C2: Restrict CORS to the deployed frontend origin.
 // Falls back to localhost for local development.
@@ -31,7 +32,7 @@ async function verifyJWT(authHeader: string | null): Promise<boolean> {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        apikey: SUPABASE_PUBLISHABLE_KEY,
+        apikey: SUPABASE_KEY,
       },
     })
     return res.ok
