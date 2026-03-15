@@ -26,10 +26,9 @@ ENV PORT=80
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /etc/nginx/conf.d && \
     touch /var/run/nginx.pid && \
     chown nginx:nginx /var/run/nginx.pid
 
 USER nginx
 
-CMD /bin/sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+CMD /bin/sh -c "envsubst '\$PORT' < /etc/nginx/nginx.conf.template > /tmp/default.conf && nginx -c /tmp/default.conf -g 'daemon off;'"
