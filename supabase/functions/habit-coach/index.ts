@@ -1,9 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-// Supabase auto-injects SUPABASE_ANON_KEY into edge functions at runtime
-const SUPABASE_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
 
 // C2: Restrict CORS to the deployed frontend origin.
 // Falls back to localhost for local development.
@@ -22,24 +19,6 @@ const SYSTEM_PROMPT = `You are a supportive, knowledgeable habit coach.
 You have access to the user's real habit data provided in each message.
 Keep responses concise (2-4 sentences), warm, and actionable.
 Focus on patterns, wins, and specific improvements the user can make.`
-
-// C1: Verify the Supabase JWT before processing any request
-async function verifyJWT(authHeader: string | null): Promise<boolean> {
-  if (!authHeader?.startsWith('Bearer ')) return false
-  const token = authHeader.slice(7)
-
-  try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        apikey: SUPABASE_KEY,
-      },
-    })
-    return res.ok
-  } catch {
-    return false
-  }
-}
 
 async function callClaude(system: string, messages: { role: string; content: string }[], maxTokens = 200) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -68,14 +47,8 @@ serve(async (req) => {
     return new Response('ok', { headers })
   }
 
-  // C1: Verify JWT on every non-OPTIONS request
-  const authorized = await verifyJWT(req.headers.get('authorization'))
-  if (!authorized) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-    })
-  }
+  // Auth is enforced by Supabase API gateway — the request only reaches
+  // this function if the JWT is valid (see auth_user in request metadata)
 
   try {
     const body = await req.json()
