@@ -26,7 +26,7 @@ A portfolio-grade habit tracking PWA — GitHub-style contribution heatmaps, goo
 | Global state | Zustand + Immer | Lightweight alt to Redux; optimistic UI layer |
 | Data fetching | TanStack Query v5 | Cache, background sync, mutation rollback |
 | Auth + DB | Supabase (PostgreSQL + RLS) | Auth, row-level security, real-time |
-| AI | OpenAI GPT-4o mini via Supabase Edge Function | Server-side key, RAG-lite pattern |
+| AI | Anthropic claude-haiku-4-5 via Supabase Edge Function | Server-side key, RAG-lite pattern |
 | PWA | vite-plugin-pwa + Workbox | Auto-update, offline shell caching |
 | Animations | Framer Motion | Streak animations, modal transitions |
 | Date math | date-fns | Tree-shakeable, no moment.js bloat |
@@ -39,19 +39,19 @@ A portfolio-grade habit tracking PWA — GitHub-style contribution heatmaps, goo
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    React Frontend                    │
-│                                                      │
-│  Pages: Home · Stats · Profile · Auth               │
-│                                                      │
-│  ┌──────────────┐   ┌──────────────────────────┐    │
-│  │ Zustand Store│   │   TanStack Query Cache   │    │
-│  │ (optimistic) │◄──│ useHabits / useHabitLogs │    │
-│  └──────┬───────┘   └────────────┬─────────────┘    │
-│         │                        │                   │
-│  ┌──────▼────────────────────────▼─────────────┐    │
-│  │            Algorithms (src/lib/)             │    │
-│  │  streak.ts · heatmap.ts · stats.ts           │    │
-│  └──────────────────────┬───────────────────────┘    │
+│                    React Frontend                   │
+│                                                     │
+│        Pages: Home · Stats · Profile · Auth         │
+│                                                     │
+│   ┌──────────────┐   ┌──────────────────────────┐   │
+│   │ Zustand Store│   │   TanStack Query Cache   │   │
+│   │ (optimistic) │◄──│ useHabits / useHabitLogs │   │
+│   └──────┬───────┘   └────────────┬─────────────┘   │
+│          │                        │                 │
+│   ┌──────▼────────────────────────▼─────────────┐   │
+│   │            Algorithms (src/lib/)            │   │
+│   │  streak.ts · heatmap.ts · stats.ts          │   │
+│   └──────────────────────┬──────────────────────┘   │
 └─────────────────────────│───────────────────────────┘
                           │ HTTP / Supabase JS SDK
               ┌───────────▼───────────┐
@@ -64,7 +64,7 @@ A portfolio-grade habit tracking PWA — GitHub-style contribution heatmaps, goo
               │  │  habit_logs     │  │
               │  │  (+ RLS)        │  │
               │  ├─────────────────┤  │
-              │  │ Edge Functions  │──┼──► OpenAI API
+              │  │ Edge Functions  │──┼──► Anthropic API
               │  │  habit-coach    │  │
               │  └─────────────────┘  │
               └───────────────────────┘
@@ -234,7 +234,7 @@ habit-tracker/
 │   └── App.tsx                      Auth guard + router + providers
 ├── supabase/
 │   ├── functions/habit-coach/
-│   │   └── index.ts                 Edge Function: OpenAI chat + NL parse
+│   │   └── index.ts                 Edge Function: Anthropic AI chat + NL parse
 │   └── schema.sql                   Tables, indexes, RLS policies
 ├── vite.config.ts                   Vite + Tailwind + PWA config
 └── .env.example                     Required environment variables
