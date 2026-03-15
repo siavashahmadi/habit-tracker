@@ -2,17 +2,10 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 
-// C2: Restrict CORS to the deployed frontend origin.
-// Falls back to localhost for local development.
-const ALLOWED_ORIGIN = Deno.env.get('FRONTEND_URL') ?? 'http://localhost:5173'
-
-function corsHeaders(origin: string) {
-  const allowed = origin === ALLOWED_ORIGIN || origin.startsWith('http://localhost')
-  return {
-    'Access-Control-Allow-Origin': allowed ? origin : ALLOWED_ORIGIN,
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  }
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 const SYSTEM_PROMPT = `You are a supportive, knowledgeable habit coach.
@@ -39,12 +32,9 @@ async function callClaude(system: string, messages: { role: string; content: str
 }
 
 serve(async (req) => {
-  const origin = req.headers.get('origin') ?? ''
-  const headers = corsHeaders(origin)
-
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   // Auth is enforced by Supabase API gateway — the request only reaches
@@ -68,7 +58,7 @@ Examples:
       const data = await callClaude(system, [{ role: 'user', content: text }], 100)
       const parsed = JSON.parse(data.content[0].text)
       return new Response(JSON.stringify(parsed), {
-        headers: { ...headers, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
@@ -81,19 +71,19 @@ Examples:
       const data = await callClaude(systemWithContext, messages ?? [], 200)
       const reply = data.content?.[0]?.text ?? 'Sorry, I could not generate a response.'
       return new Response(JSON.stringify({ reply }), {
-        headers: { ...headers, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     return new Response(JSON.stringify({ error: 'Unknown action' }), {
       status: 400,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch {
     // H7: Return a generic error message — never expose internal error details
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
 })

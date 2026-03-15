@@ -7,8 +7,6 @@ import { calcCurrentStreak, calcBadHabitStreak } from '../../lib/algorithms/stre
 import { supabase } from '../../lib/supabase'
 import type { AIMessage } from '../../types'
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string
-
 const QUICK_PROMPTS = [
   'How am I doing overall?',
   'Which habit needs the most attention?',
@@ -67,27 +65,16 @@ export default function HabitCoach() {
 
     try {
       const context = buildContext()
-      // C1: Send the user's JWT instead of the publishable key so the Edge Function
-      // can verify the caller is authenticated
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-      if (!token) throw new Error('Not authenticated')
 
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/habit-coach`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('habit-coach', {
+        body: {
           action: 'chat',
           messages: [...messages, userMessage],
           context,
-        }),
+        },
       })
 
-      if (!res.ok) throw new Error('AI unavailable')
-      const data = await res.json()
+      if (error) throw error
 
       setMessages((prev) => [
         ...prev,
