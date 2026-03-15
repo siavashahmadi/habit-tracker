@@ -132,7 +132,7 @@ function SetupScreen() {
           <p className="text-emerald-400">cp .env.example .env</p>
           <p className="text-slate-400 pt-1"># 2. Fill in your values from supabase.com</p>
           <p className="text-amber-300">VITE_SUPABASE_URL=https://your-project.supabase.co</p>
-          <p className="text-amber-300">VITE_SUPABASE_ANON_KEY=your-anon-key</p>
+          <p className="text-amber-300">VITE_SUPABASE_PUBLISHABLE_KEY=your-publishable-key</p>
           <p className="text-slate-400 pt-1"># 3. Restart the dev server</p>
           <p className="text-emerald-400">npm run dev</p>
         </div>
@@ -142,7 +142,7 @@ function SetupScreen() {
           <ol className="list-decimal list-inside space-y-1 pl-1">
             <li>Go to <span className="text-emerald-400">supabase.com</span> → New project</li>
             <li>Run <span className="text-slate-200 font-mono">supabase/schema.sql</span> in the SQL editor</li>
-            <li>Copy URL + anon key from <span className="text-slate-200">Settings → API</span></li>
+            <li>Copy URL + publishable key from <span className="text-slate-200">Settings → API</span></li>
             <li>Add them to your <span className="text-slate-200 font-mono">.env</span> file and restart</li>
           </ol>
         </div>

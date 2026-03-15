@@ -19,7 +19,7 @@ const QUICK_PROMPTS = [
 /**
  * AI Habit Coach - a RAG-lite chat panel.
  * Injects the user's live habit + streak data as context into each prompt,
- * then sends to a Supabase Edge Function that calls OpenAI gpt-4o-mini.
+ * then sends to a Supabase Edge Function that calls Claude Haiku (Anthropic API).
  *
  * Architecture mirrors the LLM+RAG chatbot pattern from the Joulea experience.
  */
@@ -67,7 +67,7 @@ export default function HabitCoach() {
 
     try {
       const context = buildContext()
-      // C1: Send the user's JWT instead of the anon key so the Edge Function
+      // C1: Send the user's JWT instead of the publishable key so the Edge Function
       // can verify the caller is authenticated
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token

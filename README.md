@@ -120,7 +120,7 @@ POST /functions/v1/habit-coach
         ▼
 Edge Function (Deno):
   1. Prepend context to system prompt
-  2. POST → OpenAI gpt-4o-mini
+  2. POST → Claude Haiku (Anthropic API)
   3. Return { reply }
         │
         ▼
@@ -254,12 +254,12 @@ npm install
 ### 2. Create a Supabase project
 1. Go to [supabase.com](https://supabase.com) → New project
 2. Run `supabase/schema.sql` in the SQL editor
-3. Copy URL + anon key from **Settings → API**
+3. Copy URL + publishable key from **Settings → API**
 
 ### 3. Environment variables
 ```bash
 cp .env.example .env
-# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY
 ```
 
 ### 4. Run locally
@@ -271,7 +271,7 @@ npm run dev   # http://localhost:5173
 
 ```bash
 cp .env.example .env
-# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+# Fill in VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY
 
 docker compose up -d --build    # builds & starts on port 3000
 curl http://localhost:3000      # verify it's running
@@ -284,7 +284,7 @@ The multi-stage build produces an ~30MB nginx image. Supabase env vars are baked
 npm install -g supabase
 supabase login
 supabase link --project-ref your-project-id
-supabase secrets set OPENAI_API_KEY=sk-...
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
 supabase secrets set FRONTEND_URL=https://your-deployed-domain.com
 supabase functions deploy habit-coach
 ```

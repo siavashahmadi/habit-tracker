@@ -1,8 +1,8 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') ?? ''
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+const SUPABASE_PUBLISHABLE_KEY = Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
 
 // C2: Restrict CORS to the deployed frontend origin.
 // Falls back to localhost for local development.
@@ -31,13 +31,31 @@ async function verifyJWT(authHeader: string | null): Promise<boolean> {
     const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        apikey: SUPABASE_ANON_KEY,
+        apikey: SUPABASE_PUBLISHABLE_KEY,
       },
     })
     return res.ok
   } catch {
     return false
   }
+}
+
+async function callClaude(system: string, messages: { role: string; content: string }[], maxTokens = 200) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens,
+      system,
+      messages,
+    }),
+  })
+  return res.json()
 }
 
 serve(async (req) => {
@@ -64,34 +82,17 @@ serve(async (req) => {
 
     // ---- Action: parse a natural language habit description ----
     if (action === 'parse_habit') {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          response_format: { type: 'json_object' },
-          messages: [
-            {
-              role: 'system',
-              content: `Extract habit info from natural language. Return JSON with:
+      const system = `Extract habit info from natural language. Return ONLY valid JSON with:
 - name: short habit name (3-5 words max)
 - type: "good" if building a habit, "bad" if breaking one
 - icon: a single relevant emoji
 
 Examples:
 "I want to exercise daily" → {"name":"Daily Exercise","type":"good","icon":"🏃"}
-"I need to stop smoking" → {"name":"No Smoking","type":"bad","icon":"🚬"}`,
-            },
-            { role: 'user', content: text },
-          ],
-        }),
-      })
+"I need to stop smoking" → {"name":"No Smoking","type":"bad","icon":"🚬"}`
 
-      const data = await res.json()
-      const parsed = JSON.parse(data.choices[0].message.content)
+      const data = await callClaude(system, [{ role: 'user', content: text }], 100)
+      const parsed = JSON.parse(data.content[0].text)
       return new Response(JSON.stringify(parsed), {
         headers: { ...headers, 'Content-Type': 'application/json' },
       })
@@ -103,24 +104,8 @@ Examples:
         ? `${SYSTEM_PROMPT}\n\nUser's current habit data:\n${context}`
         : SYSTEM_PROMPT
 
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          max_tokens: 200,
-          messages: [
-            { role: 'system', content: systemWithContext },
-            ...(messages ?? []),
-          ],
-        }),
-      })
-
-      const data = await res.json()
-      const reply = data.choices?.[0]?.message?.content ?? 'Sorry, I could not generate a response.'
+      const data = await callClaude(systemWithContext, messages ?? [], 200)
+      const reply = data.content?.[0]?.text ?? 'Sorry, I could not generate a response.'
       return new Response(JSON.stringify({ reply }), {
         headers: { ...headers, 'Content-Type': 'application/json' },
       })

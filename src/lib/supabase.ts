@@ -1,16 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined
 
 // Flag consumed by App.tsx to show a setup screen instead of crashing
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey)
 
 // Use placeholder values so createClient doesn't throw — real calls will
 // fail gracefully when isSupabaseConfigured is false (app shows setup screen first)
 export const supabase = createClient(
   supabaseUrl ?? 'https://placeholder.supabase.co',
-  supabaseAnonKey ?? 'placeholder-key'
+  supabaseKey ?? 'placeholder-key'
 )
 
 export type Database = {
