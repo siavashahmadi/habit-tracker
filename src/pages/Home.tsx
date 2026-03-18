@@ -1,5 +1,4 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutGrid, List } from 'lucide-react'
 import { useHabits } from '../hooks/useHabits'
 import { useHabitLogs } from '../hooks/useHabitLogs'
 import { useHabitStore } from '../store/habitStore'
@@ -11,7 +10,6 @@ import { useEffect, useState } from 'react'
 export default function Home() {
   const { data: habits = [], isLoading } = useHabits()
   const { data: logs = [] } = useHabitLogs()
-  const { viewMode, setViewMode } = useHabitStore()
   const [userName, setUserName] = useState('')
 
   useEffect(() => {
@@ -24,36 +22,12 @@ export default function Home() {
   const goodHabits = habits.filter((h) => h.type === 'good')
   const badHabits = habits.filter((h) => h.type === 'bad')
 
-  const cardGrid = viewMode === 'grid'
-    ? 'grid grid-cols-1 sm:grid-cols-2 gap-3'
-    : 'flex flex-col gap-3'
-
   return (
     <div className="px-4 py-6 pb-24 lg:pb-8 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-bold text-white">My Habits</h1>
-          <p className="text-sm text-slate-400 mt-0.5">Welcome back, {userName} 👋</p>
-        </div>
-        <div className="flex items-center gap-1 bg-slate-800 rounded-xl p-1">
-          <button
-            onClick={() => setViewMode('grid')}
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'grid' ? 'bg-slate-600 text-white' : 'text-slate-500 hover:text-white'
-            }`}
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-lg transition-colors ${
-              viewMode === 'list' ? 'bg-slate-600 text-white' : 'text-slate-500 hover:text-white'
-            }`}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-xl font-bold text-white">My Habits</h1>
+        <p className="text-sm text-slate-400 mt-0.5">Welcome back, {userName} 👋</p>
       </div>
 
       {isLoading ? (
@@ -75,14 +49,13 @@ export default function Home() {
                   Good Habits
                 </h2>
               </div>
-              <div className={cardGrid}>
+              <div className="flex flex-col gap-3">
                 <AnimatePresence>
                   {goodHabits.map((habit) => (
                     <HabitCard
                       key={habit.id}
                       habit={habit}
                       logs={logs}
-                      viewMode={viewMode}
                     />
                   ))}
                 </AnimatePresence>
@@ -99,14 +72,13 @@ export default function Home() {
                   Breaking Bad Habits
                 </h2>
               </div>
-              <div className={cardGrid}>
+              <div className="flex flex-col gap-3">
                 <AnimatePresence>
                   {badHabits.map((habit) => (
                     <HabitCard
                       key={habit.id}
                       habit={habit}
                       logs={logs}
-                      viewMode={viewMode}
                     />
                   ))}
                 </AnimatePresence>
