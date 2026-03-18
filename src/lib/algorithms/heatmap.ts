@@ -73,17 +73,3 @@ function getIntensityLevel(dateStr: string, logSet: Set<string>): 1 | 2 | 3 | 4 
   return 1
 }
 
-/**
- * Flatten heatmap grid to a 1D array of cells for rendering as a compact row strip.
- * Used in the mobile HabitCard compact view.
- */
-export function flattenHeatmap(grid: HeatmapCell[][]): HeatmapCell[] {
-  return grid.flat()
-}
-
-/**
- * Get just the last N weeks of the heatmap for compact card display.
- */
-export function getRecentWeeks(grid: HeatmapCell[][], weeks: number): HeatmapCell[][] {
-  return grid.slice(Math.max(0, grid.length - weeks))
-}
