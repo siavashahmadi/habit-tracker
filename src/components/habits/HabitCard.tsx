@@ -4,6 +4,7 @@ import { Trash2, ChevronDown, ChevronUp, Plus, Check } from 'lucide-react'
 import { format } from 'date-fns'
 import StreakBadge from './StreakBadge'
 import HeatmapGrid from './HeatmapGrid'
+import WeekStrip from './WeekStrip'
 import MilestoneCelebration from './MilestoneCelebration'
 import { useDeleteHabit } from '../../hooks/useHabits'
 import { useLogToday } from '../../hooks/useHabitLogs'
@@ -15,10 +16,9 @@ import type { Habit, HabitLog } from '../../types'
 interface HabitCardProps {
   habit: Habit
   logs: HabitLog[]
-  viewMode?: 'grid' | 'list'
 }
 
-export default function HabitCard({ habit, logs, viewMode = 'grid' }: HabitCardProps) {
+export default function HabitCard({ habit, logs }: HabitCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [activeMilestone, setActiveMilestone] = useState<Milestone | null>(null)
   const deleteHabit = useDeleteHabit()
@@ -60,9 +60,6 @@ export default function HabitCard({ habit, logs, viewMode = 'grid' }: HabitCardP
       deleteHabit.mutate(habit.id)
     }
   }
-
-  // In list mode show expanded view by default
-  const showFullHeatmap = viewMode === 'list' || expanded
 
   return (
     <>
@@ -120,19 +117,17 @@ export default function HabitCard({ habit, logs, viewMode = 'grid' }: HabitCardP
               </motion.button>
             )}
 
-            {/* Expand toggle on mobile */}
-            {viewMode === 'grid' && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-              >
-                {expanded ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-            )}
+            {/* Expand/collapse toggle */}
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="w-8 h-8 rounded-full bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            >
+              {expanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              )}
+            </button>
 
             {/* Delete */}
             <button
@@ -149,21 +144,29 @@ export default function HabitCard({ habit, logs, viewMode = 'grid' }: HabitCardP
           <StreakBadge streak={streak} type={habit.type} />
         </div>
 
-        {/* Heatmap — compact by default, full when expanded */}
+        {/* Collapsed: WeekStrip — Expanded: full HeatmapGrid */}
         <div className="overflow-hidden">
-          <HeatmapGrid
-            habitId={habit.id}
-            habitType={habit.type}
-            habitColor={habit.color}
-            logs={habitLogs}
-            compact={!showFullHeatmap}
-            interactive
-          />
+          {expanded ? (
+            <HeatmapGrid
+              habitId={habit.id}
+              habitType={habit.type}
+              habitColor={habit.color}
+              logs={habitLogs}
+              interactive
+            />
+          ) : (
+            <WeekStrip
+              habitId={habit.id}
+              habitType={habit.type}
+              habitColor={habit.color}
+              logs={habitLogs}
+            />
+          )}
         </div>
 
-        {/* Expanded detail (list view or expanded card) */}
+        {/* Footer detail — only when expanded */}
         <AnimatePresence>
-          {showFullHeatmap && (
+          {expanded && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
