@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { format, parseISO } from 'date-fns'
 import { motion } from 'framer-motion'
-import { buildHeatmap, getRecentWeeks } from '../../lib/algorithms/heatmap'
+import { buildHeatmap } from '../../lib/algorithms/heatmap'
 import { useToggleLog } from '../../hooks/useHabitLogs'
 import { useHabitStore } from '../../store/habitStore'
 import type { HabitType, HabitLog } from '../../types'
@@ -11,7 +11,6 @@ interface HeatmapGridProps {
   habitType: HabitType
   habitColor: string
   logs: HabitLog[]
-  compact?: boolean        // true = show last 16 weeks (mobile card)
   interactive?: boolean    // allow tapping cells
 }
 
@@ -35,14 +34,14 @@ const BAD_COLORS: Record<number, string> = {
  * GitHub-style contribution heatmap.
  *
  * Data structure: 2D array [week][day] built in O(n) using a hash set.
- * Cells are sized responsively and colored based on habit type + intensity.
+ * Container uses overflow-hidden + justify-end so the most recent weeks
+ * are always visible and old weeks clip off the left edge.
  */
 export default function HeatmapGrid({
   habitId,
   habitType,
   habitColor,
   logs,
-  compact = false,
   interactive = true,
 }: HeatmapGridProps) {
   const toggleLog = useToggleLog()
@@ -54,8 +53,6 @@ export default function HeatmapGrid({
     [logs, habitType]
   )
 
-  const visibleGrid = compact ? getRecentWeeks(grid, 16) : grid
-
   const getCellColor = (filled: boolean, level: number, isFuture: boolean) => {
     if (isFuture) return 'bg-slate-800/40'
     if (!filled) return 'bg-slate-800 hover:bg-slate-700'
@@ -65,18 +62,14 @@ export default function HeatmapGrid({
 
   const handleCellClick = (date: string, isFuture: boolean) => {
     if (!interactive || isFuture) return
-    // Only allow logging today (+ past days for corrections)
     const currentlyLogged = isOptimisticallyLogged(habitId, date, logs)
     toggleLog.mutate({ habitId, date, currentlyLogged })
   }
 
-  const cellSize = compact ? 'w-3 h-3' : 'w-3.5 h-3.5'
-  const gap = compact ? 'gap-0.5' : 'gap-1'
-
   return (
-    <div className={`flex ${gap} overflow-x-auto no-scrollbar`}>
-      {visibleGrid.map((week, wi) => (
-        <div key={wi} className={`flex flex-col ${gap}`}>
+    <div className="flex gap-1 overflow-hidden justify-end">
+      {grid.map((week, wi) => (
+        <div key={wi} className="flex flex-col gap-1 flex-shrink-0">
           {week.map((cell) => {
             const isOptLogged = isOptimisticallyLogged(habitId, cell.date, logs)
             const displayFilled = isOptLogged
@@ -92,7 +85,7 @@ export default function HeatmapGrid({
                 title={`${format(parseISO(cell.date), 'MMM d, yyyy')}${displayFilled ? ' ✓' : ''}`}
                 onClick={() => handleCellClick(cell.date, cell.isFuture)}
                 disabled={!interactive || cell.isFuture}
-                className={`${cellSize} rounded-sm transition-all duration-150 ${bgClass} ${
+                className={`w-3.5 h-3.5 rounded-sm transition-all duration-150 ${bgClass} ${
                   cell.isToday ? 'ring-1 ring-white/30' : ''
                 } ${interactive && !cell.isFuture ? 'cursor-pointer' : 'cursor-default'}`}
                 style={
