@@ -17,7 +17,6 @@ interface HabitStore {
   // UI state
   selectedHabitId: string | null
   isAddModalOpen: boolean
-  viewMode: 'grid' | 'list'
 
   // Actions
   setOptimisticLog: (habitId: string, date: string, logged: boolean) => void
@@ -25,21 +24,14 @@ interface HabitStore {
   rollbackOptimisticLog: (habitId: string, date: string) => void
   setSelectedHabit: (id: string | null) => void
   setAddModalOpen: (open: boolean) => void
-  setViewMode: (mode: 'grid' | 'list') => void
   isOptimisticallyLogged: (habitId: string, date: string, serverLogs: HabitLog[]) => boolean
 }
-
-// Detect and validate persisted view mode preference
-const _savedViewMode = localStorage.getItem('viewMode')
-const savedViewMode: 'grid' | 'list' =
-  _savedViewMode === 'grid' || _savedViewMode === 'list' ? _savedViewMode : 'grid'
 
 export const useHabitStore = create<HabitStore>()(
   immer((set, get) => ({
     optimisticLogs: {},
     selectedHabitId: null,
     isAddModalOpen: false,
-    viewMode: savedViewMode,
 
     setOptimisticLog: (habitId, date, logged) => {
       set((state) => {
@@ -73,15 +65,6 @@ export const useHabitStore = create<HabitStore>()(
     setSelectedHabit: (id) => set({ selectedHabitId: id }),
 
     setAddModalOpen: (open) => set({ isAddModalOpen: open }),
-
-    setViewMode: (mode) => {
-      try {
-        localStorage.setItem('viewMode', mode)
-      } catch {
-        // Private browsing / storage quota — silently ignore
-      }
-      set({ viewMode: mode })
-    },
 
     isOptimisticallyLogged: (habitId, date, serverLogs) => {
       const optimistic = get().optimisticLogs[habitId]
