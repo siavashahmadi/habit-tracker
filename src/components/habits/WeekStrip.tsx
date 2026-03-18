@@ -40,7 +40,7 @@ export default function WeekStrip({ habitId, habitType, habitColor, logs }: Week
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 p-1">
       {weekDays.map((day) => {
         const filled = isOptimisticallyLogged(habitId, day.date, logs)
 
