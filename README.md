@@ -1,6 +1,6 @@
 # Habit Tracker
 
-A portfolio-grade habit tracking PWA — GitHub-style contribution heatmaps, good/bad habit tracking, AI coaching, and seamless mobile + desktop experience.
+A habit tracking web app — Habit tracking heatmaps, good/bad habit capability, AI coaching, and a seamless mobile + desktop experience.
 
 ---
 
