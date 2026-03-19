@@ -67,7 +67,7 @@ export default function HeatmapGrid({
   }
 
   return (
-    <div className="flex gap-1 overflow-hidden justify-end">
+    <div className="flex gap-1 p-1 overflow-hidden justify-end">
       {grid.map((week, wi) => (
         <div key={wi} className="flex flex-col gap-1 flex-shrink-0">
           {week.map((cell) => {

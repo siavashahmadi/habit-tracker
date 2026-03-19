@@ -6,10 +6,12 @@ import StreakBadge from './StreakBadge'
 import HeatmapGrid from './HeatmapGrid'
 import WeekStrip from './WeekStrip'
 import MilestoneCelebration from './MilestoneCelebration'
+import HabitIcon from './HabitIcon'
 import { useDeleteHabit } from '../../hooks/useHabits'
 import { useLogToday } from '../../hooks/useHabitLogs'
 import { calcCurrentStreak, calcBadHabitStreak } from '../../lib/algorithms/streak'
 import { getMilestoneCrossed, getHighestMilestoneAchieved } from '../../lib/milestones'
+import { getStreakLevelNumber, getGlowColor } from '../../lib/streakLevel'
 import type { Milestone } from '../../lib/milestones'
 import type { Habit, HabitLog } from '../../types'
 
@@ -50,6 +52,19 @@ export default function HabitCard({ habit, logs }: HabitCardProps) {
 
   const highestMilestone = getHighestMilestoneAchieved(streak)
 
+  const streakLevel = useMemo(() => getStreakLevelNumber(streak), [streak])
+
+  const cardGlowStyle = useMemo(() => {
+    if (streakLevel === 0) return {}
+    const glowOpacities = [0, 0.08, 0.12, 0.18, 0.22, 0.25]
+    const glowSizes = ['', '0 0 8px', '0 0 12px 2px', '0 0 18px 4px', '0 0 24px 6px', '0 0 30px 8px']
+    const borderOpacity = 0.2 + streakLevel * 0.1
+    return {
+      borderColor: getGlowColor(habit.color, habit.type, borderOpacity),
+      boxShadow: `${glowSizes[streakLevel]} ${getGlowColor(habit.color, habit.type, glowOpacities[streakLevel])}`,
+    }
+  }, [streakLevel, habit.color, habit.type])
+
   const today = format(new Date(), 'yyyy-MM-dd')
   const loggedToday = logDates.includes(today)
 
@@ -66,14 +81,35 @@ export default function HabitCard({ habit, logs }: HabitCardProps) {
       <motion.div
         layout
         initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={
+          streakLevel >= 5
+            ? {
+                opacity: 1,
+                y: 0,
+                boxShadow: [
+                  `0 0 30px 8px ${getGlowColor(habit.color, habit.type, 0.25)}`,
+                  `0 0 36px 10px ${getGlowColor(habit.color, habit.type, 0.32)}`,
+                  `0 0 30px 8px ${getGlowColor(habit.color, habit.type, 0.25)}`,
+                ],
+              }
+            : { opacity: 1, y: 0 }
+        }
+        transition={
+          streakLevel >= 5
+            ? { boxShadow: { duration: 2, repeat: Infinity, ease: 'easeInOut' }, opacity: { duration: 0.3 }, y: { duration: 0.3 } }
+            : undefined
+        }
         exit={{ opacity: 0, scale: 0.96 }}
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-4 hover:border-slate-700 transition-colors"
+        className="bg-slate-900 border rounded-2xl p-4 transition-all duration-500"
+        style={{
+          borderColor: cardGlowStyle.borderColor || 'rgb(30 41 59)',
+          boxShadow: streakLevel >= 5 ? undefined : (cardGlowStyle.boxShadow || 'none'),
+        }}
       >
         {/* Header Row */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="text-2xl flex-shrink-0">{habit.icon}</span>
+            <HabitIcon icon={habit.icon} color={habit.color} type={habit.type} streak={streak} />
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <h3 className="font-semibold text-white text-sm leading-tight truncate">
@@ -103,11 +139,30 @@ export default function HabitCard({ habit, logs }: HabitCardProps) {
                 onClick={() => logToday(habit.id)}
                 disabled={isPending}
                 title={loggedToday ? 'Mark incomplete' : 'Mark complete'}
-                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                   loggedToday
-                    ? 'bg-emerald-500 text-white'
+                    ? 'text-white'
                     : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-emerald-400'
                 }`}
+                style={loggedToday && streakLevel > 0 ? {
+                  backgroundColor: getGlowColor(habit.color, habit.type, 1),
+                  boxShadow: `0 0 ${4 + streakLevel * 3}px ${getGlowColor(habit.color, habit.type, 0.15 + streakLevel * 0.06)}`,
+                } : loggedToday ? { backgroundColor: '#10b981' } : undefined}
+                {...(streakLevel > 0 && loggedToday ? {
+                  animate: {
+                    scale: [1, 1 + streakLevel * 0.02, 1],
+                    boxShadow: [
+                      `0 0 ${4 + streakLevel * 3}px ${getGlowColor(habit.color, habit.type, 0.15 + streakLevel * 0.06)}`,
+                      `0 0 ${8 + streakLevel * 4}px ${getGlowColor(habit.color, habit.type, 0.25 + streakLevel * 0.06)}`,
+                      `0 0 ${4 + streakLevel * 3}px ${getGlowColor(habit.color, habit.type, 0.15 + streakLevel * 0.06)}`,
+                    ],
+                  },
+                  transition: {
+                    duration: 2.5 - streakLevel * 0.25,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                  },
+                } : {})}
               >
                 {loggedToday ? (
                   <Check className="w-4 h-4" strokeWidth={2.5} />
